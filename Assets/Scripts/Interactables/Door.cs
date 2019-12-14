@@ -17,7 +17,16 @@ using UnityEngine;
 public class Door : Interactable
 {
     //
-    BoxCollider2D[] m_bcColliders;
+    public Vector2 m_v2LatchOffset = new Vector2(0.0f,0.0f);
+
+    //
+    public Vector2 m_v2LatchSize = new Vector2(0.0f,0.0f);
+
+    //
+    private BoxCollider2D[] m_bcColliders;
+
+    //
+    private HingeJoint2D m_hjHinge;
 
     //
     private Vector2 m_v2TriggerOffset;
@@ -27,14 +36,6 @@ public class Door : Interactable
 
     //
     private bool m_bLatchable;
-
-    //
-    public Vector2 m_v2LatchOffset = new Vector2(0,0);
-
-    //
-    public Vector2 m_v2LatchSize = new Vector2(0,0);
-
-
 
     //--------------------------------------------------------------------------------------
     // initialization.
@@ -46,6 +47,9 @@ public class Door : Interactable
 
         //
         m_bcColliders = GetComponents<BoxCollider2D>();
+
+        //
+        m_hjHinge = GetComponent<HingeJoint2D>();
 
         //
         foreach (BoxCollider2D bcCollider2D in m_bcColliders)
@@ -82,6 +86,9 @@ public class Door : Interactable
         base.InteractedWith();
 
         //
+        m_hjHinge.useLimits = false;
+
+        //
         GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.None;
 
         //
@@ -91,7 +98,7 @@ public class Door : Interactable
             if (bcCollider2D.isTrigger)
             {
                 //
-                bcCollider2D.offset = m_v2LatchOffset;
+                bcCollider2D.offset = m_v2LatchOffset - new Vector2(1.0f,0.0f);
                 bcCollider2D.size = m_v2LatchSize;
             }
         }
@@ -116,6 +123,12 @@ public class Door : Interactable
             GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
 
             //
+            m_hjHinge.useLimits = true;
+
+            //
+            m_bLatchable = false;
+
+            //
             foreach (BoxCollider2D bcCollider2D in m_bcColliders)
             {
                 //
@@ -127,20 +140,23 @@ public class Door : Interactable
                 }
             }
         }
-    }
-
-    //--------------------------------------------------------------------------------------
-    // OnTriggerExit: OnTriggerExit is called when the Collider cObject exits the trigger.
-    //
-    // Param:
-    //      cObject: The other Collider invloved in the collision.
-    //--------------------------------------------------------------------------------------
-    private void OnTriggerExit2D(Collider2D cObject)
-    {
+       
         //
-        if (cObject.tag == "Latch")
+        if (cObject.tag == "Open Check" && !m_bLatchable)
         {
-            m_bLatchable = true;
+            //
+            foreach (BoxCollider2D bcCollider2D in m_bcColliders)
+            {
+                //
+                if (bcCollider2D.isTrigger)
+                {
+                    //
+                    bcCollider2D.offset = m_v2LatchOffset;
+
+                    //
+                    m_bLatchable = true;
+                }
+            }
         }
     }
 }
